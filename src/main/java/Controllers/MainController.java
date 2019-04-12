@@ -34,9 +34,9 @@ import smartHouse.Instrumnets.Instrument;
 
 public class MainController {
 
-    Stage secondaryStage;
-    SmartHouse house = new SmartHouse();
-    ObservableList<Instrument> observableList = FXCollections.observableArrayList();
+    private Stage secondaryStage;
+    private SmartHouse house = new SmartHouse();
+    private ObservableList<Instrument> observableList = FXCollections.observableArrayList();
 
     @FXML
     private ResourceBundle resources;
@@ -51,22 +51,6 @@ public class MainController {
     private JFXButton statisticBtn;
 
     @FXML
-    void stateChanged(ActionEvent event) {
-        if(!electricityCheckBox.isSelected()) {
-            statisticBtn.setDisable(true);
-            saveChanges();
-            SerializationClass.serialize(house);
-            try {
-                secondaryStage.close();
-            }catch (Exception e){}
-        }
-        else {
-            house = SerializationClass.deSerialize();
-            statisticBtn.setDisable(false);
-        }
-    }
-
-    @FXML
     void showStatistic(MouseEvent event) {
         if(event.getButton() == MouseButton.PRIMARY)
             showTable();
@@ -75,10 +59,22 @@ public class MainController {
     @FXML
     void initialize() {
         electricityCheckBox.setSelected(true);
-        if(!electricityCheckBox.isSelected())
-            statisticBtn.setDisable(true);
-        else
-            statisticBtn.setDisable(false);
+        electricityCheckBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if(!electricityCheckBox.isSelected()) {
+                    statisticBtn.setDisable(true);
+                    saveChanges();
+                    SerializationClass.serialize(house);
+                    try {
+                        secondaryStage.close();
+                    }catch (Exception e){}
+                }
+                else {
+                    house = SerializationClass.deSerialize();
+                    statisticBtn.setDisable(false);
+                }            }
+        });
     }
 
     private void showTable(){
@@ -169,10 +165,7 @@ public class MainController {
 
         table.getColumns().addAll(instrumentName, instrumentState, instrumentElectricityConsumption, instrumentEdit);
         observableList.clear();
-        for (Instrument ins:
-             house.instruments) {
-            observableList.add(ins);
-        }
+        observableList.addAll(house.instruments);
         table.setItems(observableList);
 
         //region adding table to new stage and oppening it
@@ -191,9 +184,6 @@ public class MainController {
 
     private void saveChanges(){
         house.instruments.clear();
-        for (Instrument ins:
-             observableList) {
-            house.instruments.add(ins);
-        }
+        house.instruments.addAll(observableList);
     }
 }
